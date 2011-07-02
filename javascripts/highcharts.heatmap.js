@@ -21,33 +21,52 @@
 $.fn.heatmap = function(chartOptions, config) {
     var element = $(this);
     var heatMapper = {
-        buildSeriesData: function(data) {
-            return data;
+        defaultColors : ["#F23A33","#FFDD2F","#91C450"],
+        buildSeriesData: function(config) {
+            var len = config.seriesData.length;
+            for (var x = 0; x < len; x++) {
+                config.seriesData[x].marker = {
+                    symbol: 'heatmap'
+                };
+                var dlen = config.seriesData[x].data.length;
+                for(var y = 0; y < dlen; y++){
+                  config.seriesData[x].data[y].fillColor = this.getColor(config.seriesData[x].data[y].name,config.thresholds[y]);
+                }
+            }
+            return config.seriesData;
+        },
+        getColor: function(num, threshold){
+          if(typeof(threshold.colors) === 'undefined'){
+            threshold.colors = this.defaultColors;
+          }
+          var len = threshold.colors.length;
+          var p = Math.min(0.999999999999,num/threshold.max);
+          return threshold.colors[Math.floor(len * p)];
         },
 
         /*
           Creates the appropriately sized heatmap rect for the space provided by the chart.
         */
-        createSymbol : function(chart, element){
-          var that = this;
-          that.height = (element.height() / chart.yAxis.categories.length)/2;
-          that.width = (element.width() / chart.xAxis.categories.length)/2;
+        createSymbol: function(chart, element) {
+            var that = this;
+            that.height = (element.height() / chart.yAxis.categories.length) / 2;
+            that.width = (element.width() / chart.xAxis.categories.length) / 2;
 
-          /*
+            /*
             FIXME: This offset is only necessary to keep the heatmap items from overlapping one another
             This can most likely be removed if we are able to calibrate the width and height according to the 
             buffer used to draw the gridlines.
           */
-          that.height -= chart.yAxis.categories.length * 1.7;
-          that.width -= chart.xAxis.categories.length * 0.5;
-          $.extend(Highcharts.Renderer.prototype.symbols, {
-              rect: function(){
-                var args = Array.prototype.slice.call(arguments);
-                return that.rect.apply(that,args);
+            that.height -= chart.yAxis.categories.length * 1.7;
+            that.width -= chart.xAxis.categories.length * 0.5;
+            $.extend(Highcharts.Renderer.prototype.symbols, {
+                heatmap: function() {
+                    var args = Array.prototype.slice.call(arguments);
+                    return that.heatmap.apply(that, args);
                 }
-          });
+            });
         },
-        rect: function(x, y) {
+        heatmap: function(x, y) {
             var len = 0.707 * this.radius;
             var ylen = len / 1.2;
             return [
@@ -121,7 +140,7 @@ $.fn.heatmap = function(chartOptions, config) {
                 }
             }
         },
-        series: heatMapper.buildSeriesData(config.seriesData)
+        series: heatMapper.buildSeriesData(config)
     };
     $.extend(true, defaultChartOptions, chartOptions);
     defaultChartOptions.yAxis.categories = config.yCategories;
