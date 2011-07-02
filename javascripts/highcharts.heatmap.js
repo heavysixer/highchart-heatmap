@@ -23,17 +23,16 @@ $.fn.heatmap = function(chartOptions, config, callback) {
     var heatMapper = {
         defaultColors : ["#F23A33","#FFDD2F","#91C450"],
         aliasEventsChain : function(options){
+          var that = this;
           if(typeof(options.chart.events) === 'object'){
             if(typeof(options.chart.events.load) !== 'undefined'){
               this.afterLoadCallback = options.chart.events.load;
-              var that = this;
               options.chart.events.load = function() {
                 var args = Array.prototype.slice.call(arguments);
                 that.beforeLoadCallback.apply(that, args);
                 that.afterLoadCallback.apply(that, args);
               };
             } else {
-              var that = this;
               options.chart.events.load = function() {
                 var args = Array.prototype.slice.call(arguments);
                 that.beforeLoadCallback.apply(that, args);
@@ -81,13 +80,6 @@ $.fn.heatmap = function(chartOptions, config, callback) {
             this.setHeight(element.height(),chart);
             this.setWidth(element.width(),chart);
 
-            /*
-            FIXME: This offset is only necessary to keep the heatmap items from overlapping one another
-            This can most likely be removed if we are able to calibrate the width and height according to the 
-            buffer used to draw the gridlines.
-          */
-            //this.height -= chart.yAxis.categories.length * 1.7;
-            //this.width -= chart.xAxis.categories.length * 0.5;
             $.extend(Highcharts.Renderer.prototype.symbols, {
                 heatmap: function() {
                     var args = Array.prototype.slice.call(arguments);
