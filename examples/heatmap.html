@@ -25,7 +25,7 @@
           });
       }
       var seriesData = [];
-      var len = 11;
+      var len = 12;
       var obj = {};
       for (var x = 0; x < len; x++) {
           obj = {
@@ -50,7 +50,9 @@
               text: 'Heatmap Example'
           }
       },
-      heatchartConfig);
+      heatchartConfig, function(chart){
+        console.log(chart)
+      });
     </script>
 </body>
 </html>

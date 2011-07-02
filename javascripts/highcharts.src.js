@@ -5475,7 +5475,6 @@ function Chart (options, callback) {
 		 * Redraw the axis to reflect changes in the data or axis extremes
 		 */
 		function redraw() {
-			
 			// hide tooltip and hover states
 			if (tracker.resetTracker) {
 				tracker.resetTracker();

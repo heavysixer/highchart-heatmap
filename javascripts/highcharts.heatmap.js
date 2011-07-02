@@ -18,10 +18,39 @@
 /*jslint forin: true */
 /*global document, window, navigator, setInterval, clearInterval, clearTimeout, setTimeout, location, jQuery, $ */
 
-$.fn.heatmap = function(chartOptions, config) {
+$.fn.heatmap = function(chartOptions, config, callback) {
     var element = $(this);
     var heatMapper = {
         defaultColors : ["#F23A33","#FFDD2F","#91C450"],
+        aliasEventsChain : function(options){
+          if(typeof(options.chart.events) === 'object'){
+            if(typeof(options.chart.events.load) !== 'undefined'){
+              this.afterLoadCallback = options.chart.events.load;
+              var that = this;
+              options.chart.events.load = function() {
+                var args = Array.prototype.slice.call(arguments);
+                that.beforeLoadCallback.apply(that, args);
+                that.afterLoadCallback.apply(that, args);
+              };
+            } else {
+              var that = this;
+              options.chart.events.load = function() {
+                var args = Array.prototype.slice.call(arguments);
+                that.beforeLoadCallback.apply(that, args);
+              };
+            }
+          } else {
+            options.chart.events = {};
+            this.aliasEventsChain(options);
+          }
+        },
+        beforeLoadCallback : function(event){
+          var chart = event.target;
+          this.setHeight(chart.clipRect.height, defaultChartOptions);
+          this.setWidth(chart.clipRect.width, defaultChartOptions);
+          chart.isDirtyBox = true;
+          chart.redraw(false);
+        },
         buildSeriesData: function(config) {
             var len = config.seriesData.length;
             for (var x = 0; x < len; x++) {
@@ -49,16 +78,16 @@ $.fn.heatmap = function(chartOptions, config) {
         */
         createSymbol: function(chart, element) {
             var that = this;
-            that.height = (element.height() / chart.yAxis.categories.length) / 2;
-            that.width = (element.width() / chart.xAxis.categories.length) / 2;
+            this.setHeight(element.height(),chart);
+            this.setWidth(element.width(),chart);
 
             /*
             FIXME: This offset is only necessary to keep the heatmap items from overlapping one another
             This can most likely be removed if we are able to calibrate the width and height according to the 
             buffer used to draw the gridlines.
           */
-            that.height -= chart.yAxis.categories.length * 1.7;
-            that.width -= chart.xAxis.categories.length * 0.5;
+            //this.height -= chart.yAxis.categories.length * 1.7;
+            //this.width -= chart.xAxis.categories.length * 0.5;
             $.extend(Highcharts.Renderer.prototype.symbols, {
                 heatmap: function() {
                     var args = Array.prototype.slice.call(arguments);
@@ -66,9 +95,13 @@ $.fn.heatmap = function(chartOptions, config) {
                 }
             });
         },
+        setHeight: function(h,chart) {
+          this.height = (h / chart.yAxis.categories.length) / 2;
+        },
+        setWidth: function(w,chart) {
+          this.width = (w / chart.xAxis.categories.length) / 2;
+        },
         heatmap: function(x, y) {
-            var len = 0.707 * this.radius;
-            var ylen = len / 1.2;
             return [
             'M', x - this.width, y - this.height,
             'L', x + this.width, y - this.height,
@@ -145,8 +178,13 @@ $.fn.heatmap = function(chartOptions, config) {
     $.extend(true, defaultChartOptions, chartOptions);
     defaultChartOptions.yAxis.categories = config.yCategories;
     defaultChartOptions.xAxis.categories = config.xCategories;
+    heatMapper.aliasEventsChain(defaultChartOptions);
     heatMapper.createSymbol(defaultChartOptions, element);
 
-    var chart = new Highcharts.Chart(defaultChartOptions);
+    var chart = new Highcharts.Chart(defaultChartOptions, function(){
+      if(typeof(callback) === 'function'){
+        callback.apply(this,Array.prototype.slice.call(arguments));
+      }
+    });
     return chart;
 };
