@@ -30,17 +30,20 @@ $.fn.heatmap = function(chartOptions, config) {
         */
         createSymbol : function(chart, element){
           var that = this;
-          that.height = element.height();
-          that.width = element.width();
-          that.xItems = chart.xAxis.categories.length;
-          that.yItems = chart.yAxis.categories.length;
-          console.log(that.xItems)
-          console.log(that.yItems)
-          that.radius = 10
+          that.height = (element.height() / chart.yAxis.categories.length)/2;
+          that.width = (element.width() / chart.xAxis.categories.length)/2;
+
+          /*
+            FIXME: This offset is only necessary to keep the heatmap items from overlapping one another
+            This can most likely be removed if we are able to calibrate the width and height according to the 
+            buffer used to draw the gridlines.
+          */
+          that.height -= chart.yAxis.categories.length * 1.7;
+          that.width -= chart.xAxis.categories.length * 0.5;
           $.extend(Highcharts.Renderer.prototype.symbols, {
               rect: function(){
                 var args = Array.prototype.slice.call(arguments);
-                return that.rect.apply(that,args)
+                return that.rect.apply(that,args);
                 }
           });
         },
@@ -48,10 +51,10 @@ $.fn.heatmap = function(chartOptions, config) {
             var len = 0.707 * this.radius;
             var ylen = len / 1.2;
             return [
-            'M', x - len, y - ylen,
-            'L', x + len, y - ylen,
-            x + len, y + ylen,
-            x - len, y + ylen,
+            'M', x - this.width, y - this.height,
+            'L', x + this.width, y - this.height,
+            x + this.width, y + this.height,
+            x - this.width, y + this.height,
             'Z'
             ];
         }
@@ -102,7 +105,6 @@ $.fn.heatmap = function(chartOptions, config) {
             },
             scatter: {
                 marker: {
-                    radius: 5,
                     states: {
                         hover: {
                             enabled: true,
@@ -125,6 +127,7 @@ $.fn.heatmap = function(chartOptions, config) {
     defaultChartOptions.yAxis.categories = config.yCategories;
     defaultChartOptions.xAxis.categories = config.xCategories;
     heatMapper.createSymbol(defaultChartOptions, element);
+
     var chart = new Highcharts.Chart(defaultChartOptions);
     return chart;
 };
