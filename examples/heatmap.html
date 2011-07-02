@@ -1,0 +1,54 @@
+<html>
+  <head>
+    <title>Funnel Plot</title>
+  </head>
+  <body>
+    <div id="container" style="width: 800px; height: 400px; margin: 0 auto"></div>
+    <script type="text/javascript" src="../javascripts/jquery-1.6.min.js"></script>
+    <script type="text/javascript" src="../javascripts/highcharts.src.js"></script>
+    <script type="text/javascript" src="../javascripts/highcharts.heatmap.js"></script>
+    <script type="text/javascript">
+      /*
+        This method generates a heatchart config object and fills it with fake data used for the heatchart demo
+      */
+      var heatchartConfig = {
+          xCategories: [],
+          yCategories: ['Primary Care', 'Acute Care', 'Community Care', 'Urgent Care', 'Emergency Care'],
+          seriesData: []
+      };
+      var seriesData = [];
+      var len = 11;
+      var obj = {};
+      for (var x = 0; x < len; x++) {
+          obj = {
+              name: 'Hospital ' + x,
+              marker: {
+                  symbol: 'rect',
+                  radius: 51
+              },
+              data: []
+          };
+          for (var y = 0; y < heatchartConfig.yCategories.length; y++) {
+              obj.data.push({
+                  'fillColor': 'rgba(0, ' + parseInt(100 + (Math.random(155) * 100), 10) + ', 0, 0.5)',
+                  'x': x,
+                  'y': y,
+                  'name': parseInt(Math.random(2000) * 1000, 10)
+              });
+          }
+          heatchartConfig.xCategories.push(obj.name);
+          heatchartConfig.seriesData.push(obj);
+      }
+
+      /* 
+              Actually renders the heatmap.
+            */
+      $("#container").heatmap({
+          title: {
+              text: 'Heatmap Example'
+          }
+      },
+      heatchartConfig);
+    </script>
+</body>
+</html>
